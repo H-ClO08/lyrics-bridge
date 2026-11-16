@@ -1,4 +1,6 @@
-## 改动内容
+<!-- 中文或英文填写均可 / Filling this in Chinese or English is equally fine -->
+
+## 改动内容 / What changed
 
 <!-- 一句话说明这个 PR 做了什么 -->
 

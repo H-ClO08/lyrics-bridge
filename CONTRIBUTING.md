@@ -1,5 +1,10 @@
 # 贡献指南
 
+> **English speakers:** this guide is written in Chinese. The essentials — **zero third-party
+> dependencies is a hard rule**, run `node test/selftest.js` before opening a PR, use
+> `type: summary` commit messages, attach before/after screenshots for layout changes, and never
+> commit `.cache/`, `local.properties` or APKs. Issues and PRs in English are welcome.
+
 很高兴你愿意参与。这个项目很小，流程保持简单。
 
 ## 提 Issue 之前

@@ -1,5 +1,10 @@
 # 安全策略
 
+> **English speakers:** use the private **Security → Report a vulnerability** flow, not a public
+> issue. Never paste a real cookie or QR link — redact it. In short: the LAN service has **no
+> authentication by design** (home network only), the NetEase cookie never leaves the phone's
+> private storage, and both components ship **zero third-party dependencies**.
+
 ## 支持范围
 
 只有**最新发布版本**（当前 v1.5.4）会收到安全修复。旧版本请先升级再报告。
