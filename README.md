@@ -3,6 +3,7 @@
 [English](README.en.md) | **简体中文**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/H-ClO08/lyrics-bridge?color=blue.svg)](https://github.com/H-ClO08/lyrics-bridge/releases)
 [![Platform](https://img.shields.io/badge/platform-Android%208.0%2B%20%7C%20Node%2018%2B-blue.svg)](#快速开始)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -40,7 +41,7 @@
 
 ### 方案一：只装手机 App（推荐）
 
-1. 下载 [`ncm-phone-bridge-v1.5.4.apk`](ncm-phone-bridge/ncm-phone-bridge-v1.5.4.apk) 并安装
+1. 下载 [`ncm-phone-bridge-v1.5.4.apk`](https://github.com/H-ClO08/lyrics-bridge/releases/download/v1.5.4/ncm-phone-bridge-v1.5.4.apk) 并安装
 2. 打开 App，按提示授予**通知使用权**（读播放状态必需）
 3. 平板 / 电脑浏览器打开 App 首页显示的地址，例如 `http://192.168.1.23:8787`
 4. 想用平板收藏和切歌 → App 内扫码登录网易云账号
