@@ -1,0 +1,43 @@
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ---- 构建产物 ----
+build/
+.gradle/
+.gradle.bak.*/
+*.iml
+.idea/
+local.properties
+*.hprof
+
+# ---- 运行时数据（勿提交）----
+# .cache/ 里有网易云登录 Cookie、歌词缓存与本地偏好
+.cache/
+.tmp/
+smtc/*.log
+*.log
+
+# ---- 第三方二进制（adb / fastboot，约 17MB）----
+tools/platform-tools/
+
+# ---- APK：只保留当前发布版本 ----
+ncm-phone-bridge/*.apk
+!ncm-phone-bridge/ncm-phone-bridge-v1.5.4.apk
+
+# ---- 本仓库只收两个项目目录，其余工作区杂物一律排除 ----
+# BetterLyrics 上游源码（仅作参考解包，不属于本项目）
+.bl-src/
+bl.tar.gz
+# 旧的分发副本，内容与 ncm-nowplaying/ 重复
+dist/
+# 会话记忆与临时输出
+.workbuddy/
+bridge-procs.txt
+proc2.txt
+
+# ---- 系统 ----
+.DS_Store
+Thumbs.db
+desktop.ini

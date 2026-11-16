@@ -1,0 +1,20 @@
+{
+  "name": "ncm-nowplaying",
+  "version": "1.0.0",
+  "private": true,
+  "description": "把安卓手机上正在播放的网易云音乐实时投到电脑：封面 + 动态歌词",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node src/server.js --source=mock",
+    "connect": "node tools/adb-setup.js",
+    "check-phone": "node tools/adb-setup.js --check",
+    "sessions": "node tools/list-smtc.js",
+    "test": "node test/selftest.js",
+    "ui-check": "node test/ui-check.js",
+    "debug:adb": "node src/server.js --log-raw"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

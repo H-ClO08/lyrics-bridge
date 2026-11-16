@@ -1,0 +1,5 @@
+node_modules/
+.cache/
+tools/platform-tools/
+.tmp/
+smtc/*.log

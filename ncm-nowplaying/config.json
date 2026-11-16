@@ -1,0 +1,22 @@
+{
+  "port": 8787,
+  "host": "0.0.0.0",
+  "source": "auto",
+  "adbPath": "",
+  "adbSerial": "",
+  "adbAutoConnect": "",
+  "phoneUrl": "",
+  "lanHost": "",
+  "pollIntervalMs": 5000,
+  "deviceTimeoutMs": 8000,
+  "logRawDumpsys": false,
+  "requirePackage": "netease",
+  "metadataSizeHint": 0,
+  "translationEnabled": true,
+  "coverSize": 640,
+  "lyricOffsetMs": 0,
+  "searchFallbackQueries": 4,
+  "cacheFile": ".cache/netease.json",
+  "cacheMaxEntries": 300,
+  "debugState": false
+}
