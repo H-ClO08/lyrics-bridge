@@ -1,5 +1,11 @@
 # 歌词桥 · LyricsBridge
 
+[English](README.en.md) | **简体中文**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Android%208.0%2B%20%7C%20Node%2018%2B-blue.svg)](#快速开始)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](CONTRIBUTING.md)
+
 把**安卓手机上正在播放的网易云音乐**，实时变成**平板 / 电脑浏览器上的动态歌词**，
 并且在平板和电脑上就能**切歌、暂停、收藏** —— 不需要电脑当中转，也不需要开 USB 调试。
 
@@ -107,7 +113,13 @@ node src/server.js --source=mock   # 没有手机也能先看效果
 - 通知使用权在部分定制 ROM 上被限制，需要「允许受限设置」
 - 歌词匹配依赖网易云搜索接口，冷门曲目可能匹配不到，可在页面上手动纠正
 
-## 说明
+## 贡献
 
-本项目为个人自用的局域网投屏工具，与网易云音乐官方无关。
-歌词与封面版权归各自权利人所有，请勿用于分发或商业用途。
+欢迎 issue 与 PR —— 先读 [贡献指南](CONTRIBUTING.md)。安全问题请按 [安全策略](SECURITY.md) 私密报告，不要开公开 issue。
+
+## 许可证
+
+代码以 [MIT](LICENSE) 授权，© 2026 H-ClO08。你可以自由使用、修改、商用、闭源分发，只需保留版权声明。
+
+**歌词、封面与歌曲元数据的版权归各自权利人**，不在本项目的授权范围内。本项目与网易云音乐官方无关，
+是一个个人自用的局域网投屏工具，请勿用它分发这些内容。
