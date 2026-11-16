@@ -13,16 +13,14 @@ from either screen. No PC in the middle, no USB debugging.
 
 > Put on a song on your phone, read the lyrics and tap the heart on your tablet. Two devices, that's it.
 
-> The per-component guides linked below are written in Chinese.
-
 ---
 
 ## What's in here
 
 | Directory | What it is | What you need |
 |---|---|---|
-| [`ncm-phone-bridge/`](ncm-phone-bridge/) | **Android app.** Reads local playback state, serves its own HTTP API | An Android 8.0+ phone, install the APK |
-| [`ncm-nowplaying/`](ncm-nowplaying/) | **Desktop service.** Node.js, three data sources, built-in browser view | Node.js 18+, zero dependencies |
+| [`ncm-phone-bridge/`](ncm-phone-bridge/README.en.md) | **Android app.** Reads local playback state, serves its own HTTP API | An Android 8.0+ phone, install the APK |
+| [`ncm-nowplaying/`](ncm-nowplaying/README.en.md) | **Desktop service.** Node.js, three data sources, built-in browser view | Node.js 18+, zero dependencies |
 
 They work standalone or together:
 
@@ -59,7 +57,7 @@ node src/server.js --source=mock    # no phone needed, good for trying it out
 ```
 
 The three data sources (adb polling, HTTP push, and masquerading as a Windows media session
-for BetterLyrics) are documented in the [desktop guide](ncm-nowplaying/README.md).
+for BetterLyrics) are documented in the [desktop guide](ncm-nowplaying/README.en.md).
 
 ---
 
@@ -132,6 +130,10 @@ Requires JDK 17 and Android SDK 34. Gradle comes from the wrapper.
 - Notification access is restricted on some OEM ROMs and needs the "allow restricted settings" flow
 - Lyric matching relies on NetEase search, so obscure tracks may not resolve — you can correct it
   from the page
+- The batch scripts and console output (including the phone app's UI) are currently **Chinese only**;
+  the English docs show the exact strings so you can match them
+- The built-in web page highlights lyrics **line by line**; word-by-word needs BetterLyrics via the
+  desktop service's SMTC bridge
 
 ## Contributing
 
