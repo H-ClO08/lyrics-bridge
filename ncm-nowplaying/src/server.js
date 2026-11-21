@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 
 const { WSServer } = require('./ws');
 const { Hub } = require('./hub');
@@ -283,7 +284,7 @@ function main() {
       if (url === '/api/refresh') return sendJson(res, await hub.refresh());
 
       if (url === '/api/cover') {
-        return proxyCover(query.get('url'), res);
+        return proxyCover(query.get('url'), res, config.coverSize);
       }
 
       if (url === '/api/debug/dumpsys') {
@@ -557,6 +558,9 @@ function main() {
 }
 
 const COVER_CACHE = new Map();
+// 内存缓存只活到进程退出，而封面在切歌前会反复被请求（桥接每秒一轮、
+// 网页每次刷新）。落一份到磁盘后，同一首歌第二次起就是本地读。
+const COVER_DISK_DIR = path.join(ROOT, '.cache', 'covers');
 
 /**
  * 给外部集成（SMTC 桥接、BetterLyrics、状态灯之类的工具）用的精简状态。
@@ -602,7 +606,7 @@ function nowPlayingPayload(hub) {
  * 封面代理：让页面与封面同源，前端才能用 canvas 提取主色。
  * NetEase 图床不返回 CORS 头，直连会污染 canvas。
  */
-async function proxyCover(rawUrl, res) {
+async function proxyCover(rawUrl, res, coverSize = 1024) {
   let target;
   try {
     target = new URL(String(rawUrl || ''));
@@ -617,25 +621,50 @@ async function proxyCover(rawUrl, res) {
     return;
   }
 
+  // 手机推送过来的封面是图床原始地址，不带尺寸参数。部分专辑的原图极大
+  // （实测一张 14,916,631 字节，下载耗时 77 秒），远超任何合理的超时窗口，
+  // 外部表现就是「一直没有封面」。这里统一补尺寸参数，让图床直接返回适合
+  // 屏幕显示的版本；URL 自带 param 的（网易云搜索结果）保持原样不动。
+  if (!target.searchParams.has('param')) {
+    const size = Number(coverSize) > 0 ? Math.min(Number(coverSize), 2048) : 1024;
+    target.searchParams.set('param', `${size}y${size}`);
+  }
+
   const key = target.toString();
-  const hit = COVER_CACHE.get(key);
-  if (hit) {
+  const send = (body, type) => {
     res.writeHead(200, {
-      'Content-Type': hit.type,
-      'Content-Length': hit.body.length,
+      'Content-Type': type,
+      'Content-Length': body.length,
       'Cache-Control': 'public, max-age=86400',
       'Access-Control-Allow-Origin': '*',
     });
-    res.end(hit.body);
+    res.end(body);
+  };
+
+  const hit = COVER_CACHE.get(key);
+  if (hit) {
+    send(hit.body, hit.type);
     return;
   }
+
+  const diskPath = path.join(COVER_DISK_DIR, crypto.createHash('sha1').update(key).digest('hex') + '.img');
+  try {
+    const body = fs.readFileSync(diskPath);
+    if (body.length > 1000) {
+      let type = 'image/jpeg';
+      try { type = fs.readFileSync(diskPath + '.type', 'utf8').trim() || type; } catch (e) { /* 沿用默认值 */ }
+      COVER_CACHE.set(key, { body, type });
+      send(body, type);
+      return;
+    }
+  } catch (err) { /* 没有磁盘缓存，继续回源 */ }
 
   let upstream;
   let buf;
   try {
     upstream = await fetch(key, {
       headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://music.163.com/' },
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(45000),
     });
     if (!upstream.ok) {
       // 必须把 body 消费/取消掉：留着不读的话，超时到点后的 abort 会在
@@ -654,13 +683,14 @@ async function proxyCover(rawUrl, res) {
   if (COVER_CACHE.size > 60) COVER_CACHE.delete(COVER_CACHE.keys().next().value);
   COVER_CACHE.set(key, { body: buf, type });
 
-  res.writeHead(200, {
-    'Content-Type': type,
-    'Content-Length': buf.length,
-    'Cache-Control': 'public, max-age=86400',
-    'Access-Control-Allow-Origin': '*',
-  });
-  res.end(buf);
+  // 写盘失败不影响本次响应，只是下次还得回源。
+  try {
+    fs.mkdirSync(COVER_DISK_DIR, { recursive: true });
+    fs.writeFileSync(diskPath, buf);
+    fs.writeFileSync(diskPath + '.type', type, 'utf8');
+  } catch (err) { /* 忽略 */ }
+
+  send(buf, type);
 }
 
 function normalizePush(payload) {

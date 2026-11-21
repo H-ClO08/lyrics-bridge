@@ -13,7 +13,7 @@
   "requirePackage": "netease",
   "metadataSizeHint": 0,
   "translationEnabled": true,
-  "coverSize": 640,
+  "coverSize": 1024,
   "lyricOffsetMs": 0,
   "searchFallbackQueries": 4,
   "cacheFile": ".cache/netease.json",

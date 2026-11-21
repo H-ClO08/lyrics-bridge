@@ -558,7 +558,7 @@ don't hard-code the address on the tablet:
 | `requirePackage` | `netease` | Only accept sessions from this package. Set to `""` to accept any player |
 | `lanHost` | `""` | Pin which address to advertise (fallback when auto-detection fails on odd networks). Empty means automatic ordering: physical adapters first, then the system's egress address, virtual adapters last |
 | `translationEnabled` | `true` | Fetch and merge translated lyrics |
-| `coverSize` | `640` | Cover dimensions. Smaller saves bandwidth (`500` ≈ 250 KB, `640` ≈ 390 KB) |
+| `coverSize` | `1024` | Cover edge length. **This also applies to covers pushed from the phone**: when the CDN URL carries no size parameter, some albums return the full original — one measured cover was 14.9 MB and took 77 s, which always times out. `1024` ≈ 1.2 MB; `500` ≈ 340 KB; `2048` ≈ 3.8 MB (usually too slow on weak networks) |
 | `lyricOffsetMs` | `0` | Server-wide lyric offset; the front-end slider is usually enough |
 | `searchFallbackQueries` | `4` | Maximum number of search query variants tried when matching |
 

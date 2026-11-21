@@ -42,6 +42,7 @@ param(
     [int]$IntervalMs = 1000,
     [string]$AppId = 'NCMPhoneBridge',
     [int]$ResyncThresholdMs = 2500,
+    [int]$CoverSize = 1024,
     [switch]$DryRun
 )
 
@@ -114,7 +115,7 @@ function Get-Json {
 }
 
 function Get-ImageBytes {
-    param([string]$Url, [int]$TimeoutMs = 25000)
+    param([string]$Url, [int]$TimeoutMs = 45000)
     $req = [System.Net.HttpWebRequest]::Create($Url)
     $req.Method = 'GET'
     $req.Timeout = $TimeoutMs
@@ -417,6 +418,7 @@ try {
             $script:CurrentCover = $null
             $script:CoverUrl = ''
             $script:CoverFailAt = [datetime]::MinValue
+            $script:CoverFailCount = 0
 
             try { $player.PlaybackSession.Position = [TimeSpan]::FromMilliseconds($posMs) } catch { }
             if ($np.playing) { try { $player.Play() } catch { } } else { try { $player.Pause() } catch { } }
@@ -478,7 +480,14 @@ try {
             $fetched = $null
             $lastErr = ''
             # Local proxy first (it caches and normalises the URL), direct CDN second.
-            $candidates = @("$Server/api/cover?url=" + [uri]::EscapeDataString($want), $want)
+            # The direct fallback must carry the same size hint: requesting the raw URL
+            # returns the untouched original, and one measured cover was 14.9 MB / 77s.
+            $direct = $want
+            if ($direct -notmatch '[?&]param=') {
+                $sep = if ($direct.Contains('?')) { '&' } else { '?' }
+                $direct = "$direct$sep" + "param=$CoverSize" + "y$CoverSize"
+            }
+            $candidates = @("$Server/api/cover?url=" + [uri]::EscapeDataString($want), $direct)
             foreach ($u in $candidates) {
                 try {
                     if ($coverCache.ContainsKey($u) -and $coverCache[$u]) { $fetched = $coverCache[$u]; break }
@@ -502,8 +511,11 @@ try {
             }
             else {
                 $script:CoverFailCount++
-                $script:CoverFailAt = (Get-Date).AddSeconds(5)
-                Write-Log "[warn] cover failed (#$($script:CoverFailCount)): $lastErr" 'Yellow'
+                # 5s, 10s, 20s, 40s, then 80s cap. A fixed 5s retry spammed the log
+                # with 48 identical lines in four minutes when the CDN was unreachable.
+                $backoff = [int][Math]::Min(5 * [Math]::Pow(2, [Math]::Min($script:CoverFailCount - 1, 4)), 80)
+                $script:CoverFailAt = (Get-Date).AddSeconds($backoff)
+                Write-Log "[warn] cover failed (#$($script:CoverFailCount)), retry in ${backoff}s: $lastErr" 'Yellow'
             }
         }
 
