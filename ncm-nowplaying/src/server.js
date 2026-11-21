@@ -635,7 +635,7 @@ async function proxyCover(rawUrl, res) {
   try {
     upstream = await fetch(key, {
       headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://music.163.com/' },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(20000),
     });
     if (!upstream.ok) {
       // 必须把 body 消费/取消掉：留着不读的话，超时到点后的 abort 会在

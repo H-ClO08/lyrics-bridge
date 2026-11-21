@@ -114,7 +114,7 @@ function Get-Json {
 }
 
 function Get-ImageBytes {
-    param([string]$Url, [int]$TimeoutMs = 15000)
+    param([string]$Url, [int]$TimeoutMs = 25000)
     $req = [System.Net.HttpWebRequest]::Create($Url)
     $req.Method = 'GET'
     $req.Timeout = $TimeoutMs
