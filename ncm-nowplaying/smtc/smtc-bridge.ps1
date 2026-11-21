@@ -324,6 +324,9 @@ $failCount = 0
 $coverCache = @{}
 $script:MetaTicksLeft = 0
 $script:CurrentCover = $null
+$script:CoverUrl = ''
+$script:CoverFailAt = [datetime]::MinValue
+$script:CoverFailCount = 0
 $script:MockWarned = $false
 $timeline = [Activator]::CreateInstance($T.Timeline)
 
@@ -412,6 +415,8 @@ try {
             # has settled (cover is re-applied only once, to avoid stream churn).
             $script:MetaTicksLeft = 5
             $script:CurrentCover = $null
+            $script:CoverUrl = ''
+            $script:CoverFailAt = [datetime]::MinValue
 
             try { $player.PlaybackSession.Position = [TimeSpan]::FromMilliseconds($posMs) } catch { }
             if ($np.playing) { try { $player.Play() } catch { } } else { try { $player.Pause() } catch { } }
@@ -424,7 +429,9 @@ try {
                         if ($coverCache.Count -gt 6) { $coverCache.Remove(($coverCache.Keys | Select-Object -First 1)) }
                     }
                     $script:CurrentCover = $coverCache[$coverUrl]
+                    $script:CoverUrl = [string]$np.cover
                     Set-AlbumArt -Smtc $smtc -Bytes $script:CurrentCover
+                    Write-Log "cover loaded: $($script:CurrentCover.Length) bytes"
                 }
                 catch { Write-Log "[warn] cover failed: $($_.Exception.Message)" 'Yellow' }
             }
@@ -457,6 +464,46 @@ try {
             catch { }
             if ($script:CurrentCover) {
                 try { Set-AlbumArt -Smtc $smtc -Bytes $script:CurrentCover } catch { }
+            }
+        }
+
+        # ---------------- cover self-heal (runs every tick) ----------------
+        # The cover used to be fetched exactly once, at the song-change tick. If that
+        # single attempt missed - the server had not resolved the artwork yet, or the
+        # CDN timed out - LoadedKey was already updated, so the session stayed without
+        # a thumbnail for the entire track. Retry until this track's cover lands, with
+        # a short backoff so a dead CDN does not stall every tick.
+        if ($np.cover -and $script:CoverUrl -ne [string]$np.cover -and (Get-Date) -ge $script:CoverFailAt) {
+            $want = [string]$np.cover
+            $fetched = $null
+            $lastErr = ''
+            # Local proxy first (it caches and normalises the URL), direct CDN second.
+            $candidates = @("$Server/api/cover?url=" + [uri]::EscapeDataString($want), $want)
+            foreach ($u in $candidates) {
+                try {
+                    if ($coverCache.ContainsKey($u) -and $coverCache[$u]) { $fetched = $coverCache[$u]; break }
+                    $bytes = Get-ImageBytes $u
+                    if ($bytes -and $bytes.Length -gt 0) {
+                        $coverCache[$u] = $bytes
+                        if ($coverCache.Count -gt 6) { $coverCache.Remove(($coverCache.Keys | Select-Object -First 1)) }
+                        $fetched = $bytes
+                        break
+                    }
+                }
+                catch { $lastErr = $_.Exception.Message }
+            }
+            if ($fetched) {
+                $script:CoverUrl = $want
+                $script:CurrentCover = $fetched
+                $script:CoverFailCount = 0
+                $script:CoverFailAt = [datetime]::MinValue
+                try { Set-AlbumArt -Smtc $smtc -Bytes $fetched } catch { Write-Log "[warn] album art failed: $($_.Exception.Message)" 'Yellow' }
+                Write-Log "cover loaded (retry): $($fetched.Length) bytes"
+            }
+            else {
+                $script:CoverFailCount++
+                $script:CoverFailAt = (Get-Date).AddSeconds(5)
+                Write-Log "[warn] cover failed (#$($script:CoverFailCount)): $lastErr" 'Yellow'
             }
         }
 
