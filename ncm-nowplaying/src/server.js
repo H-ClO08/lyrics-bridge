@@ -212,6 +212,21 @@ function main() {
 
   const log = (...args) => console.log(`[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}]`, ...args);
 
+  // -------------------------------------------------------------------------
+  // 兜底：不让一次网络抖动把整个服务带走
+  //
+  // Node 22 起未处理的 Promise 拒绝默认直接终止进程。这个服务会长期挂在后台，
+  // 而它要访问网易云接口、手机 HTTP 服务、封面图床 —— 任一处 keep-alive 连接
+  // 在 AbortSignal.timeout 到点时抛出的 DOMException，只要有一条路径漏了
+  // catch，整个投屏就断了。所以这里统一记录并继续运行，而不是进程退出。
+  // -------------------------------------------------------------------------
+  process.on('unhandledRejection', (err) => {
+    log('未处理的 Promise 拒绝（已忽略，服务继续运行）：', (err && (err.stack || err.message)) || String(err));
+  });
+  process.on('uncaughtException', (err) => {
+    log('未捕获的异常（已忽略，服务继续运行）：', (err && (err.stack || err.message)) || String(err));
+  });
+
   const resolver = new NeteaseResolver(config);
   const account = new NeteaseAccount({ cacheDir: path.join(ROOT, '.cache'), log });
   const hub = new Hub({ config, resolver, log, account });
@@ -507,6 +522,9 @@ function main() {
       if (list.length > 1) {
         log(`  若平板上打不开第一个地址，页面设置里的二维码下方可以切换其它地址。`);
       }
+    }).catch((err) => {
+      // 探测出口地址失败只影响启动时那行提示，不影响服务本身
+      log('局域网地址探测失败：', err.message);
     });
     const srcDesc = useHttp
       ? `手机 App（${String(config.phoneUrl).trim()}）— 无需 adb`
@@ -599,6 +617,12 @@ async function proxyCover(rawUrl, res) {
     return;
   }
 
+  // 图床原图经常 1MB 以上，弱网下单张要 4～5 秒，桥接端 8 秒超时就会拿不到封面。
+  // 加上 param 让图床直接返回 640px 压缩版（几十 KB），既快又够用。
+  if (!target.searchParams.has('param')) {
+    target.searchParams.set('param', '640y640');
+  }
+
   const key = target.toString();
   const hit = COVER_CACHE.get(key);
   if (hit) {
@@ -612,15 +636,25 @@ async function proxyCover(rawUrl, res) {
     return;
   }
 
-  const upstream = await fetch(key, {
-    headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://music.163.com/' },
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!upstream.ok) {
-    res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('upstream ' + upstream.status);
+  let upstream;
+  let buf;
+  try {
+    upstream = await fetch(key, {
+      headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://music.163.com/' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!upstream.ok) {
+      // 必须把 body 消费/取消掉：留着不读的话，超时到点后的 abort 会在
+      // undici 内部留下一条没有监听者的拒绝，Node 22 会把它升级成进程退出。
+      try { await upstream.body?.cancel(); } catch (e) { /* 忽略 */ }
+      res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' }).end('upstream ' + upstream.status);
+      return;
+    }
+    buf = Buffer.from(await upstream.arrayBuffer());
+  } catch (err) {
+    res.writeHead(504, { 'Content-Type': 'text/plain; charset=utf-8' }).end('cover timeout: ' + err.message);
     return;
   }
-  const buf = Buffer.from(await upstream.arrayBuffer());
   const type = upstream.headers.get('content-type') || 'image/jpeg';
 
   if (COVER_CACHE.size > 60) COVER_CACHE.delete(COVER_CACHE.keys().next().value);
