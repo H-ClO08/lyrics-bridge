@@ -617,12 +617,6 @@ async function proxyCover(rawUrl, res) {
     return;
   }
 
-  // 图床原图经常 1MB 以上，弱网下单张要 4～5 秒，桥接端 8 秒超时就会拿不到封面。
-  // 加上 param 让图床直接返回 640px 压缩版（几十 KB），既快又够用。
-  if (!target.searchParams.has('param')) {
-    target.searchParams.set('param', '640y640');
-  }
-
   const key = target.toString();
   const hit = COVER_CACHE.get(key);
   if (hit) {
