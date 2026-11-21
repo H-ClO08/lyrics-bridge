@@ -312,6 +312,14 @@ curl "http://localhost:8787/api/push?title=Lemon&artist=米津玄師&position=10
 2. 创建一个 `MediaPlayer` 播放静音 WAV —— 这是**唯一能在不装任何东西的前提下注册出真实 SMTC 会话**的办法（Windows 没有给外部程序直接注册会话的接口，PowerShell 5.1 可以直接投影 WinRT 类型，所以整个桥接不需要编译器）
 3. 轮询 `/api/nowplaying`，把 曲名/歌手/专辑/封面/时长/进度 镜像进去
 
+封面默认推的是手机端那张图，尺寸取 `coverSize`（默认 1024）。注意 **BetterLyrics 会优先使用
+SMTC 缩略图，只有拿不到时才回落到它自己的在线封面搜索**（iTunes / 酷狗）。如果你更希望它按
+歌名去搜，用 `-CoverMode none` 启动桥接：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File smtc\smtc-bridge.ps1 -CoverMode none
+```
+
 ### 两个非显然的坑（都已解决，记录一下）
 
 **坑一：`MediaPlayer` 会持续用它自己的时间轴覆盖你手动设的。**

@@ -43,6 +43,12 @@ param(
     [string]$AppId = 'NCMPhoneBridge',
     [int]$ResyncThresholdMs = 2500,
     [int]$CoverSize = 1024,
+    # Push the phone's artwork into the media session. Note that BetterLyrics checks
+    # this thumbnail FIRST and only falls back to its own online album-art search
+    # (iTunes / Kugou) when there is none - so 'push' means the search never runs.
+    # Pass -CoverMode none to let BetterLyrics search instead.
+    [ValidateSet('push', 'none')]
+    [string]$CoverMode = 'push',
     [switch]$DryRun
 )
 
@@ -225,6 +231,7 @@ Write-Host '=================================================='
 Write-Host "  service : $Server"
 Write-Host "  app id  : $AppId"
 Write-Host "  poll    : ${IntervalMs}ms"
+Write-Host "  cover   : $CoverMode (push = phone artwork, none = let BetterLyrics search)"
 Write-Host "  temp    : $script:TempDir"
 Write-Host ''
 
@@ -423,7 +430,7 @@ try {
             try { $player.PlaybackSession.Position = [TimeSpan]::FromMilliseconds($posMs) } catch { }
             if ($np.playing) { try { $player.Play() } catch { } } else { try { $player.Pause() } catch { } }
 
-            if ($np.cover) {
+            if ($CoverMode -eq 'push' -and $np.cover) {
                 $coverUrl = "$Server/api/cover?url=" + [uri]::EscapeDataString([string]$np.cover)
                 try {
                     if (-not $coverCache.ContainsKey($coverUrl)) {
@@ -475,7 +482,7 @@ try {
         # CDN timed out - LoadedKey was already updated, so the session stayed without
         # a thumbnail for the entire track. Retry until this track's cover lands, with
         # a short backoff so a dead CDN does not stall every tick.
-        if ($np.cover -and $script:CoverUrl -ne [string]$np.cover -and (Get-Date) -ge $script:CoverFailAt) {
+        if ($CoverMode -eq 'push' -and $np.cover -and $script:CoverUrl -ne [string]$np.cover -and (Get-Date) -ge $script:CoverFailAt) {
             $want = [string]$np.cover
             $fetched = $null
             $lastErr = ''

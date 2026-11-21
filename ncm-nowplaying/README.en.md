@@ -355,6 +355,15 @@ What `smtc/smtc-bridge.ps1` does:
    compiler)
 3. Polls `/api/nowplaying` and mirrors title / artist / album / cover / duration / position into it
 
+The cover comes from the phone by default, at `coverSize` (1024 by default). Note that **BetterLyrics
+uses the SMTC thumbnail first and only falls back to its own online album-art search** (iTunes /
+Kugou) when there is none. If you would rather let it search by song name, start the bridge with
+`-CoverMode none`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File smtc\smtc-bridge.ps1 -CoverMode none
+```
+
 ### Two non-obvious pitfalls (both solved, recorded here)
 
 **Pitfall 1: `MediaPlayer` keeps overwriting your timeline with its own.** If you set the position
