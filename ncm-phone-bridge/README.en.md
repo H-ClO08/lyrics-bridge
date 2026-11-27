@@ -125,9 +125,10 @@ After that you do not need to touch the system settings UI.
   misidentified. Use "Title match" in the page settings to search for and pin the right track.
 - **Obscure tracks showing "no timed lyrics"**: the NetEase lyric endpoint has two parameter sets.
   `lv=1` returns an empty string for some tracks (typically DJ edits, covers, unreleased tracks and
-  live recordings), while `lv=-1` returns the timed original. Since v1.5.5 the app requests `lv=-1`
-  first, falls back to `lv=1`, and then tries LRCLIB when NetEase has nothing. If a track is still
-  blank after upgrading, neither source has lyrics for it.
+  live recordings), while `lv=-1` returns the timed original. Since v1.5.6 the app requests `lv=-1`
+  first, falls back to `lv=1`, and then tries LRCLIB when NetEase has nothing. LRCLIB results are
+  validated against title, artist and duration before use, so a same-name track cannot leak its
+  lyrics in. If a track is still blank after upgrading, neither source has lyrics for it.
 - Lyrics and covers come from NetEase **public endpoints** — unofficial usage. If those endpoints
   change, matching may stop temporarily (it degrades to showing the title only).
 

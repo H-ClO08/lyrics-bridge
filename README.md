@@ -41,7 +41,7 @@
 
 ### 方案一：只装手机 App（推荐）
 
-1. 下载 [`ncm-phone-bridge-v1.5.5.apk`](https://github.com/H-ClO08/lyrics-bridge/releases/download/v1.5.5/ncm-phone-bridge-v1.5.5.apk) 并安装
+1. 下载 [`ncm-phone-bridge-v1.5.6.apk`](https://github.com/H-ClO08/lyrics-bridge/releases/download/v1.5.6/ncm-phone-bridge-v1.5.6.apk) 并安装
 2. 打开 App，按提示授予**通知使用权**（读播放状态必需）
 3. 平板 / 电脑浏览器打开 App 首页显示的地址，例如 `http://192.168.1.23:8787`
 4. 想用平板收藏和切歌 → App 内扫码登录网易云账号
@@ -96,7 +96,7 @@ node src/server.js --source=mock   # 没有手机也能先看效果
 │   │   ├── NeteaseAccount.kt       扫码登录 / 收藏
 │   │   └── Weapi.java              网易云 weapi 加密（纯 Java）
 │   ├── app/src/main/assets/index.html   手机内置歌词页
-│   └── ncm-phone-bridge-v1.5.5.apk      当前发布版
+│   └── ncm-phone-bridge-v1.5.6.apk      当前发布版
 └── ncm-nowplaying/          # Node.js 电脑端
     ├── src/                 服务、Hub、歌词匹配、来源适配
     ├── public/index.html    浏览器歌词页
