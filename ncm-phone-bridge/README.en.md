@@ -123,6 +123,11 @@ After that you do not need to touch the system settings UI.
   allowlist** so it keeps serving with the screen off.
 - Lyric matching is a fuzzy search on "title + artist"; obscure covers are occasionally
   misidentified. Use "Title match" in the page settings to search for and pin the right track.
+- **Obscure tracks showing "no timed lyrics"**: the NetEase lyric endpoint has two parameter sets.
+  `lv=1` returns an empty string for some tracks (typically DJ edits, covers, unreleased tracks and
+  live recordings), while `lv=-1` returns the timed original. Since v1.5.5 the app requests `lv=-1`
+  first, falls back to `lv=1`, and then tries LRCLIB when NetEase has nothing. If a track is still
+  blank after upgrading, neither source has lyrics for it.
 - Lyrics and covers come from NetEase **public endpoints** — unofficial usage. If those endpoints
   change, matching may stop temporarily (it degrades to showing the title only).
 
@@ -131,7 +136,7 @@ After that you do not need to touch the system settings UI.
 | Path | Description |
 |---|---|
 | `GET /` | Lyrics page (includes all display preferences) |
-| `GET /api/state` | `{status, track, lyrics[], anchor}`; the front end polls once per second |
+| `GET /api/state` | `{status, track, lyrics[], anchor}`; the front end polls once per second. Each `lyrics` item is `{t, x, r?, w?}`, where `w` holds the word-level timeline |
 | `GET /api/nowplaying` | Condensed: `{title, artist, album, positionMs, durationMs, playing}` |
 | `GET /api/search?q=` | NetEase search, returns `{songId, title, artist, album, duration}` |
 | `POST /api/pin` | `{songId}` pin the song that corresponds to the current track |

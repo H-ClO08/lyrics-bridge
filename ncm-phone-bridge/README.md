@@ -107,6 +107,10 @@ adb shell cmd notification allow_listener com.ncm.phonebridge/com.ncm.phonebridg
   这样锁屏放歌也能持续供数据。
 - 歌词匹配靠"歌名 + 歌手"模糊搜索，冷门翻唱偶尔会认错；
   页面设置里可用「标题匹配」手动搜索并指定正确的歌曲。
+- **冷门曲目显示"没有时间轴歌词"**：网易云歌词接口有两套参数，`lv=1` 在部分曲目上会返回空字符串
+  （典型是 DJ 版、翻唱、未发布、live 这类冷门曲目），`lv=-1` 才返回带时间轴的原文。
+  v1.5.5 起改为 `lv=-1` 优先、`lv=1` 兜底，网易云仍为空时再查一次 LRCLIB。
+  升级后若个别曲目依旧空白，说明两个源都没有这首歌的歌词。
 - 歌词/封面来自网易云**公开接口**，属于非官方用法，接口变动时可能暂时失效（会自动降级为只显示歌名）。
 
 ## 接口一览（供二次开发）
@@ -114,7 +118,7 @@ adb shell cmd notification allow_listener com.ncm.phonebridge/com.ncm.phonebridg
 | 路径 | 说明 |
 |---|---|
 | `GET /` | 歌词显示页（含全部个性化设置） |
-| `GET /api/state` | `{status, track, lyrics[], anchor}`，前端每 1 秒轮询 |
+| `GET /api/state` | `{status, track, lyrics[], anchor}`，前端每 1 秒轮询；`lyrics` 每项为 `{t, x, r?, w?}`，`w` 是逐字时间轴 |
 | `GET /api/nowplaying` | 精简版：`{title, artist, album, positionMs, durationMs, playing}` |
 | `GET /api/search?q=` | 网易云搜索，返回 `{songId, title, artist, album, duration}` |
 | `POST /api/pin` | `{songId}` 手动指定当前曲目对应的歌曲 |

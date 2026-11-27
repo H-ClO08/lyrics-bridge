@@ -43,7 +43,7 @@ such as BetterLyrics to take over rendering.
 
 ### Option 1: phone app only (recommended)
 
-1. Download and install [`ncm-phone-bridge-v1.5.4.apk`](https://github.com/H-ClO08/lyrics-bridge/releases/download/v1.5.4/ncm-phone-bridge-v1.5.4.apk)
+1. Download and install [`ncm-phone-bridge-v1.5.5.apk`](https://github.com/H-ClO08/lyrics-bridge/releases/download/v1.5.5/ncm-phone-bridge-v1.5.5.apk)
 2. Open the app and grant **notification access** (required to read playback state)
 3. On your tablet or PC, open the address shown on the app's home screen, e.g. `http://192.168.1.23:8787`
 4. To like tracks and skip from the tablet, scan the QR code in the app to sign in to NetEase
@@ -63,8 +63,8 @@ for BetterLyrics) are documented in the [desktop guide](ncm-nowplaying/README.en
 
 ## Features
 
-- **Line-synced lyrics** — matched against NetEase by title + artist + duration, with cover art,
-  progress and translations
+- **Line-synced and word-synced lyrics** — matched against NetEase by title + artist + duration,
+  with cover art, progress and translations; tracks with a YRC version get word-by-word highlight
 - **Full control from the tablet** — previous / play-pause / next / like, all handled locally
   on the phone, never routed through a PC
 - **Responsive layouts** — portrait, landscape and split-screen; controls stay centred with the
@@ -101,7 +101,7 @@ for BetterLyrics) are documented in the [desktop guide](ncm-nowplaying/README.en
 │   │   ├── NeteaseAccount.kt       QR login / likes
 │   │   └── Weapi.java              NetEase weapi crypto (plain Java)
 │   ├── app/src/main/assets/index.html   in-app lyrics page
-│   └── ncm-phone-bridge-v1.5.4.apk      current release
+│   └── ncm-phone-bridge-v1.5.5.apk      current release
 └── ncm-nowplaying/          # Node.js desktop service
     ├── src/                 server, hub, lyric matching, source adapters
     ├── public/index.html    browser lyrics page

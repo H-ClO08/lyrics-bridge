@@ -41,7 +41,7 @@
 
 ### 方案一：只装手机 App（推荐）
 
-1. 下载 [`ncm-phone-bridge-v1.5.4.apk`](https://github.com/H-ClO08/lyrics-bridge/releases/download/v1.5.4/ncm-phone-bridge-v1.5.4.apk) 并安装
+1. 下载 [`ncm-phone-bridge-v1.5.5.apk`](https://github.com/H-ClO08/lyrics-bridge/releases/download/v1.5.5/ncm-phone-bridge-v1.5.5.apk) 并安装
 2. 打开 App，按提示授予**通知使用权**（读播放状态必需）
 3. 平板 / 电脑浏览器打开 App 首页显示的地址，例如 `http://192.168.1.23:8787`
 4. 想用平板收藏和切歌 → App 内扫码登录网易云账号
@@ -63,7 +63,7 @@ node src/server.js --source=mock   # 没有手机也能先看效果
 
 ## 能做什么
 
-- **逐行动态歌词**：按「歌名 + 歌手 + 时长」到网易云匹配，封面、进度、翻译一并显示
+- **逐行 / 逐字歌词**：按「歌名 + 歌手 + 时长」到网易云匹配，封面、进度、翻译一并显示；有 YRC 的曲目做逐字高亮
 - **平板直控**：上一首 / 播放暂停 / 下一首 / 红心收藏，全部走手机本地，不经过电脑
 - **响应式布局**：分屏、横幅、竖屏三种布局，控制条与封面居中对齐，页面锁定不滚动
 - **零第三方依赖**：手机端纯 Java/Kotlin 手写 HTTP 服务；电脑端只用 Node 内置模块
@@ -96,7 +96,7 @@ node src/server.js --source=mock   # 没有手机也能先看效果
 │   │   ├── NeteaseAccount.kt       扫码登录 / 收藏
 │   │   └── Weapi.java              网易云 weapi 加密（纯 Java）
 │   ├── app/src/main/assets/index.html   手机内置歌词页
-│   └── ncm-phone-bridge-v1.5.4.apk      当前发布版
+│   └── ncm-phone-bridge-v1.5.5.apk      当前发布版
 └── ncm-nowplaying/          # Node.js 电脑端
     ├── src/                 服务、Hub、歌词匹配、来源适配
     ├── public/index.html    浏览器歌词页

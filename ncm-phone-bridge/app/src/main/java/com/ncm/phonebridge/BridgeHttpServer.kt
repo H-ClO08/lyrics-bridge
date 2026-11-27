@@ -317,16 +317,8 @@ class BridgeHttpServer(private val port: Int, private val context: Context) {
         anchor.put("speed", if (np.playing) np.speed.toDouble() else 0.0)
         o.put("anchor", anchor)
 
-        val lyrics = JSONArray()
-        if (resolved != null) {
-            for (l in resolved.lines) {
-                val lo = JSONObject()
-                lo.put("t", l.time)
-                lo.put("x", l.text)
-                if (!l.trans.isNullOrBlank()) lo.put("r", l.trans)
-                lyrics.put(lo)
-            }
-        }
+        // 逐字歌词（w 数组）一起带出去，Pad 端才能做卡拉OK式高亮。
+        val lyrics = if (resolved != null) LrcParser.toJson(resolved.lines) else JSONArray()
         o.put("lyrics", lyrics)
         if (resolved == null && np.active && np.title.isNotBlank()) {
             o.put("message", "正在匹配歌词…")

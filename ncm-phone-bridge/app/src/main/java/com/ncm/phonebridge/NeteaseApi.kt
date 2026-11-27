@@ -106,17 +106,100 @@ object NeteaseApi {
         }
     }
 
-    private fun lyricRaw(songId: Long): Pair<String, String> {
-        val url = "https://music.163.com/api/song/lyric?id=$songId&lv=1&kv=1&tv=-1"
-        val body = httpText(url) ?: return "" to ""
-        return try {
-            val j = JSONObject(body)
-            val lrc = j.optJSONObject("lrc")?.optString("lyric") ?: ""
-            val tlrc = j.optJSONObject("tlyric")?.optString("lyric") ?: ""
-            lrc to tlrc
-        } catch (e: Exception) {
-            "" to ""
+    /** 一次歌词请求的结果：主歌词 / 翻译 / 逐字。 */
+    private data class LyricSet(val lrc: String, val tlrc: String, val yrc: String) {
+        val isEmpty: Boolean get() = lrc.isBlank() && yrc.isBlank()
+    }
+
+    private fun parseLyricBody(body: String): LyricSet = try {
+        val j = JSONObject(body)
+        LyricSet(
+            lrc = j.optJSONObject("lrc")?.optString("lyric", "") ?: "",
+            tlrc = j.optJSONObject("tlyric")?.optString("lyric", "") ?: "",
+            yrc = j.optJSONObject("yrc")?.optString("lyric", "") ?: ""
+        )
+    } catch (e: Exception) {
+        LyricSet("", "", "")
+    }
+
+    /**
+     * 取歌词。
+     *
+     * 关键：必须用 lv=-1 这一组参数。lv=1 在部分曲目（典型是较新的 / 冷门曲目）上
+     * 会返回空字符串，而 lv=-1 能正常返回带时间轴的原始歌词 —— 例如
+     * 《梦角补完计划》(3353204724)：lv=1 → 0 字符，lv=-1 → 1281 字符。
+     * 老参数保留成兜底，以防个别曲目反过来只有 lv=1 有内容。
+     */
+    private fun lyricRaw(songId: Long): LyricSet {
+        val full = "https://music.163.com/api/song/lyric?id=$songId" +
+            "&lv=-1&kv=-1&tv=-1&rv=-1&yv=1&ytv=1&ytl=1&yrv=1"
+        httpText(full)?.let { body ->
+            val parsed = parseLyricBody(body)
+            if (!parsed.isEmpty) return parsed
         }
+        val legacy = "https://music.163.com/api/song/lyric?id=$songId&lv=1&kv=1&tv=-1"
+        httpText(legacy)?.let { body ->
+            val parsed = parseLyricBody(body)
+            if (!parsed.isEmpty) return parsed
+        }
+        return LyricSet("", "", "")
+    }
+
+    private fun buildLines(set: LyricSet): MutableList<LrcLine> {
+        var lines: MutableList<LrcLine> =
+            if (set.yrc.isNotBlank()) LrcParser.parseYrc(set.yrc) else ArrayList()
+        if (lines.isEmpty()) lines = LrcParser.parse(set.lrc)
+        if (lines.isNotEmpty() && set.tlrc.isNotBlank()) {
+            LrcParser.mergeTranslation(lines, LrcParser.parse(set.tlrc))
+        }
+        return lines
+    }
+
+    /**
+     * 网易云确实没有歌词时的兜底。LRCLIB 免费、无需鉴权，返回标准 LRC。
+     */
+    private fun lrclibLyrics(
+        title: String,
+        artist: String,
+        album: String,
+        durationMs: Long
+    ): MutableList<LrcLine> {
+        if (title.isBlank()) return ArrayList()
+        val enc = { s: String -> URLEncoder.encode(s, "UTF-8") }
+        val urls = ArrayList<String>()
+        if (durationMs > 0) {
+            urls.add(
+                "https://lrclib.net/api/get?artist_name=${enc(artist)}&track_name=${enc(title)}" +
+                    "&album_name=${enc(album)}&duration=${durationMs / 1000}"
+            )
+        }
+        urls.add(
+            "https://lrclib.net/api/search?q=" +
+                enc(listOf(title, artist).filter { it.isNotBlank() }.joinToString(" "))
+        )
+
+        for (u in urls) {
+            val body = httpText(u, 9000) ?: continue
+            val synced = try {
+                if (body.trimStart().startsWith("[")) {
+                    val arr = org.json.JSONArray(body)
+                    (0 until arr.length())
+                        .mapNotNull { arr.optJSONObject(it) }
+                        .firstOrNull { it.optString("syncedLyrics", "").isNotBlank() }
+                        ?.optString("syncedLyrics", "")
+                } else {
+                    JSONObject(body).takeIf { it.optString("syncedLyrics", "").isNotBlank() }
+                        ?.optString("syncedLyrics", "")
+                }
+            } catch (e: Exception) {
+                null
+            }
+            if (!synced.isNullOrBlank()) {
+                val lines = LrcParser.parse(synced)
+                if (lines.isNotEmpty()) return lines
+            }
+        }
+        return ArrayList()
     }
 
     private fun coverUrl(songId: Long): String? {
@@ -168,9 +251,10 @@ object NeteaseApi {
 
     fun resolveById(songId: Long): Resolved? {
         val d = detail(songId) ?: return null
-        val (lrc, tlrc) = lyricRaw(songId)
-        val lines = LrcParser.parse(lrc)
-        if (tlrc.isNotBlank()) LrcParser.mergeTranslation(lines, LrcParser.parse(tlrc))
+        var lines = buildLines(lyricRaw(songId))
+        if (lines.isEmpty()) {
+            lines = lrclibLyrics(d.title, d.artist, d.album, d.durationMs)
+        }
         return Resolved(
             songId = songId,
             title = d.title,
@@ -255,9 +339,10 @@ object NeteaseApi {
             return null
         }
 
-        val (lrc, tlrc) = lyricRaw(chosen.id)
-        val lines = LrcParser.parse(lrc)
-        if (tlrc.isNotBlank()) LrcParser.mergeTranslation(lines, LrcParser.parse(tlrc))
+        var lines = buildLines(lyricRaw(chosen.id))
+        if (lines.isEmpty()) {
+            lines = lrclibLyrics(chosen.name, chosen.artists, chosen.album, chosen.durationMs)
+        }
         val resolved = Resolved(
             songId = chosen.id,
             title = chosen.name,
